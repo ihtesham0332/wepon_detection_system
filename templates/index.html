@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Threat Detection Dashboard - YOLOv12</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <!-- Core Custom Stylesheet -->
+    <link rel="stylesheet" href="/static/css/styles.css?v=1.0.1">
+</head>
+<body class="dark-theme">
+    <div class="glass-bg-glow"></div>
+    <div class="glass-bg-glow glow-2"></div>
+    
+    <div class="dashboard-container">
+        <!-- TOP HEADER PANEL -->
+        <header class="dashboard-header glass-card">
+            <div class="brand">
+                <span class="material-symbols-outlined logo-icon text-red-glow">security</span>
+                <div class="brand-text">
+                    <h1>SENTRY <span class="accent-text">VISION</span></h1>
+                    <p class="subtitle">AI-Powered Threat Guard (YOLOv12)</p>
+                </div>
+            </div>
+            
+            <!-- Navigation Header Options -->
+            <nav class="header-nav">
+                <a href="/" class="nav-link active" id="nav-dashboard">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/history" class="nav-link" id="nav-history">
+                    <span class="material-symbols-outlined">history</span>
+                    <span>Snapshot History</span>
+                </a>
+                <button type="button" class="nav-btn" id="btn-trigger-settings">
+                    <span class="material-symbols-outlined">tune</span>
+                    <span>Engine Parameters</span>
+                </button>
+            </nav>
+            
+            <div class="system-status">
+                <div class="status-indicator">
+                    <span class="status-dot offline" id="status-dot"></span>
+                    <span class="status-text" id="status-text">OFFLINE</span>
+                </div>
+                <div class="status-pill model-badge">
+                    <span class="material-symbols-outlined icon-small">memory</span>
+                    <span id="model-badge-text">YOLOv12 Loading...</span>
+                </div>
+                <div class="status-pill fps-badge">
+                    <span class="material-symbols-outlined icon-small">bolt</span>
+                    <span>FPS: <strong id="fps-counter">0.0</strong></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT GRID -->
+        <main class="dashboard-grid">
+            <!-- LEFT COLUMN: LIVE STREAM VIEWER -->
+            <section class="viewport-section glass-card">
+                <div class="section-header">
+                    <div class="header-title">
+                        <span class="material-symbols-outlined section-icon color-blue">videocam</span>
+                        <h2>Live Stream Feed</h2>
+                    </div>
+                    <div class="viewport-controls">
+                        <button class="btn btn-icon btn-secondary" id="btn-toggle-sound" title="Toggle Siren Sound">
+                            <span class="material-symbols-outlined" id="sound-icon">volume_up</span>
+                        </button>
+                        <button class="btn btn-danger" id="btn-stop-stream" disabled>
+                            <span class="material-symbols-outlined icon-small">videocam_off</span> Stop Stream
+                        </button>
+                    </div>
+                </div>
+
+                <div class="video-container" id="video-wrapper">
+                    <!-- Standard placeholder overlay -->
+                    <div class="video-placeholder" id="video-placeholder">
+                        <div class="radar-circle">
+                            <div class="radar-sweep"></div>
+                        </div>
+                        <span class="material-symbols-outlined placeholder-camera-icon">videocam</span>
+                        <h3>Feed Suspended</h3>
+                        <p>Select a video source below to initialize detection monitoring</p>
+                    </div>
+                    <!-- Live JPEG Image Feed -->
+                    <img src="" alt="Live Video Feed" class="video-feed-image hidden" id="video-feed">
+                    
+                    <!-- Critical overlay display on top of video -->
+                    <div class="critical-screen-flash" id="siren-flash"></div>
+                </div>
+
+                <!-- CONTROLLERS PANEL -->
+                <div class="source-selector-panel">
+                    <h3>Select Detection Source</h3>
+                    <div class="source-buttons-row">
+                        <!-- Webcam Button -->
+                        <button class="btn btn-primary" id="btn-webcam">
+                            <span class="material-symbols-outlined">linked_camera</span>
+                            <span>Active Webcam</span>
+                        </button>
+                        
+                        
+                        
+                        <!-- Upload Container -->
+                        <div class="upload-container">
+                            <input type="file" id="video-upload-input" accept="video/*" class="hidden-input">
+                            <button class="btn btn-secondary" id="btn-trigger-upload">
+                                <span class="material-symbols-outlined" id="upload-icon">upload_file</span>
+                                <span id="upload-btn-text">Upload Custom Video</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Download Processed Video Button (Hidden by default) -->
+                        <a href="#" id="btn-download-processed" class="btn btn-success hidden" download>
+                            <span class="material-symbols-outlined">download</span>
+                            <span>Download Processed</span>
+                        </a>
+                    </div>
+                    <div class="progress-bar-container hidden" id="upload-progress-container">
+                        <div class="progress-label">Uploading: <span id="upload-progress-percent">0%</span></div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="upload-progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: ALERTS CONSOLE -->
+            <section class="control-section">
+                <!-- ALERTS CONSOLE CARD -->
+                <div class="alerts-console-card glass-card">
+                    <div class="section-header">
+                        <div class="header-title">
+                            <span class="material-symbols-outlined section-icon color-red">warning</span>
+                            <h2>Real-Time Threat Console</h2>
+                        </div>
+                        <button class="btn btn-text color-gray" id="btn-clear-console">Clear Console</button>
+                    </div>
+                    <div class="alerts-stream" id="alerts-stream">
+                        <div class="console-empty-state" id="console-empty">
+                            <span class="material-symbols-outlined bounce-slow">verified_user</span>
+                            <p>Threat Console Ready. System is secure.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SNAPSHOT LIGHTBOX MODAL -->
+    <div class="modal hidden" id="lightbox-modal">
+        <div class="modal-backdrop" id="modal-close-backdrop"></div>
+        <div class="modal-content glass-card">
+            <button class="modal-close-btn" id="btn-close-modal">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <div class="modal-body">
+                <img src="" alt="Enlarged Alert Snapshot" id="modal-img">
+                <div class="modal-details">
+                    <h3 id="modal-title">CRITICAL SNAPSHOT</h3>
+                    <p id="modal-timestamp">Timestamp: N/A</p>
+                    <p id="modal-desc">Details of threat</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETECTION ENGINE PARAMETERS MODAL -->
+    <div class="modal hidden" id="settings-modal">
+        <div class="modal-backdrop" id="settings-close-backdrop"></div>
+        <div class="modal-content modal-settings-content glass-card">
+            <button class="modal-close-btn" id="btn-close-settings">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <div class="modal-body modal-settings-body">
+                <div>
+                    <h3 class="modal-settings-title">Detection Engine Parameters</h3>
+                    <p class="modal-settings-subtitle">Adjust confidence thresholds and proximity parameters in real-time.</p>
+                </div>
+                <form id="settings-form" class="settings-form">
+                    <!-- Person Conf Slider -->
+                    <div class="slider-group">
+                        <div class="slider-labels">
+                            <label for="conf_person">Person Confidence</label>
+                            <span class="slider-value" id="val_conf_person">70%</span>
+                        </div>
+                        <input type="range" id="conf_person" min="0.10" max="0.95" step="0.05" value="0.70">
+                    </div>
+
+                    <!-- Bag Conf Slider -->
+                    <div class="slider-group">
+                        <div class="slider-labels">
+                            <label for="conf_bag">Bag Confidence</label>
+                            <span class="slider-value" id="val_conf_bag">75%</span>
+                        </div>
+                        <input type="range" id="conf_bag" min="0.10" max="0.95" step="0.05" value="0.75">
+                    </div>
+
+                    <!-- Gun Conf Slider -->
+                    <div class="slider-group">
+                        <div class="slider-labels">
+                            <label for="conf_gun">Gun Confidence</label>
+                            <span class="slider-value" id="val_conf_gun">75%</span>
+                        </div>
+                        <input type="range" id="conf_gun" min="0.10" max="0.95" step="0.05" value="0.75">
+                    </div>
+
+                    <!-- Proximity Slider -->
+                    <div class="slider-group">
+                        <div class="slider-labels">
+                            <label for="proximity">Gun/Person Proximity</label>
+                            <span class="slider-value" id="val_proximity">200px</span>
+                        </div>
+                        <input type="range" id="proximity" min="50" max="500" step="10" value="200">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Element Fallback (Optional) -->
+    <audio id="audio-alert-source" class="hidden" preload="auto"></audio>
+
+    <!-- Scripts -->
+    <script src="/static/js/main.js?v=1.0.1"></script>
+</body>
+</html>
