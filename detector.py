@@ -159,12 +159,12 @@ class RealTimeDetector:
 
         h, w = frame.shape[:2]
         
-        # Increment frame counter for throttled diagnostics and frame skipping
+        # Increment frame counter for throttled diagnostics
         self.frame_count = getattr(self, 'frame_count', 0) + 1
         show_diagnostics = (self.frame_count % 30 == 0)
         
-        # Run inference on frame 1 and every 3rd frame afterwards (skip factor = 3)
-        run_inference = (self.frame_count == 1 or self.frame_count % 3 == 0)
+        # Process each image in the video to detect the Bag, Person and the Gun (no frame skipping)
+        run_inference = True
 
         if run_inference:
             persons = []  # List of dicts: {'box': [x1, y1, x2, y2], 'conf': float, 'center': (cx, cy)}
