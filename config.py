@@ -28,14 +28,27 @@ PROCESSED_DIR = os.path.join(BASE_DIR, "static", "processed")
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 # Default confidence thresholds (can be adjusted dynamically via Web UI)
-DEFAULT_CONF_PERSON = 0.60
-DEFAULT_CONF_BAG = 0.65
-DEFAULT_CONF_GUN = 0.70
+# Lowered to improve detection accuracy — catches more real objects
+DEFAULT_CONF_PERSON = 0.45
+DEFAULT_CONF_BAG = 0.40
+DEFAULT_CONF_GUN = 0.40
 
 # Proximity threshold in pixels
 # If a gun and person center coordinates are closer than this threshold, 
 # it will trigger the "Person Carrying Gun" CRITICAL ALERT
 PROXIMITY_THRESHOLD = 200
+
+# YOLO Inference Accuracy Settings
+# Higher imgsz = more precise bounding boxes that fit exactly on objects (but slower)
+# 1280 gives much better box precision than default 640
+INFERENCE_IMGSZ = 1280
+# IoU threshold for Non-Maximum Suppression — filters overlapping duplicate boxes
+# Lower value = fewer overlapping boxes (default YOLO is 0.7, we use 0.5 for cleaner results)
+NMS_IOU_THRESHOLD = 0.5
+# Agnostic NMS: treat all classes as one during NMS to remove cross-class duplicates
+AGNOSTIC_NMS = True
+# Maximum number of detections per frame (prevents excessive false positives)
+MAX_DETECTIONS = 100
 
 # Bounding Box and Label Text configurations for Video Processing
 # Line thickness for bounding boxes and connection lines (default: 6, was: 4)

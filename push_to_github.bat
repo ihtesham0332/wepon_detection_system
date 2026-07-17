@@ -33,7 +33,7 @@ git add .
 
 :: Commit
 echo [4/5] Creating first commit...
-git commit -m "Initial commit - Sentry Vision Threat Detection System"
+git commit -m "Initial commit - Sentry Vision Threat Detection System 2.0"
 
 :: Rename branch to main
 git branch -M main

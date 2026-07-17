@@ -190,7 +190,16 @@ class RealTimeDetector:
             # 1. Run COCO YOLO Model (Person detection & fallback Bags)
             if self.coco_model:
                 try:
-                    coco_results = self.coco_model(frame, conf=0.1, verbose=False, device=self.device)[0]
+                    coco_results = self.coco_model(
+                        frame,
+                        conf=0.1,
+                        iou=config.NMS_IOU_THRESHOLD,
+                        imgsz=config.INFERENCE_IMGSZ,
+                        agnostic_nms=config.AGNOSTIC_NMS,
+                        max_det=config.MAX_DETECTIONS,
+                        verbose=False,
+                        device=self.device
+                    )[0]
                     
                     # Raw model logging for pre-filtering diagnostics
                     if show_diagnostics:
@@ -210,10 +219,10 @@ class RealTimeDetector:
                         
                         # Class 0: Person
                         if cls_id == 0 and conf >= conf_p:
-                            cx = int((xyxy[0] + xyxy[2]) / 2)
-                            cy = int((xyxy[1] + xyxy[3]) / 2)
+                            cx = round((xyxy[0] + xyxy[2]) / 2)
+                            cy = round((xyxy[1] + xyxy[3]) / 2)
                             persons.append({
-                                'box': [int(c) for c in xyxy],
+                                'box': [round(c) for c in xyxy],
                                 'conf': conf,
                                 'center': (cx, cy)
                             })
@@ -222,7 +231,7 @@ class RealTimeDetector:
                         elif not self.bag_model_loaded and cls_id in [24, 26, 28] and conf >= conf_b:
                             label_map = {24: "Backpack", 26: "Handbag", 28: "Suitcase"}
                             bags.append({
-                                'box': [int(c) for c in xyxy],
+                                'box': [round(c) for c in xyxy],
                                 'conf': conf,
                                 'label': f"Bag ({label_map.get(cls_id, 'Bag')})"
                             })
@@ -232,7 +241,16 @@ class RealTimeDetector:
             # 1b. Run Custom Bag YOLO Model (if loaded)
             if self.bag_model_loaded and self.bag_model:
                 try:
-                    bag_results = self.bag_model(frame, conf=0.1, verbose=False, device=self.device)[0]
+                    bag_results = self.bag_model(
+                        frame,
+                        conf=0.1,
+                        iou=config.NMS_IOU_THRESHOLD,
+                        imgsz=config.INFERENCE_IMGSZ,
+                        agnostic_nms=config.AGNOSTIC_NMS,
+                        max_det=config.MAX_DETECTIONS,
+                        verbose=False,
+                        device=self.device
+                    )[0]
                     
                     # Raw model logging for pre-filtering diagnostics
                     if show_diagnostics:
@@ -263,7 +281,7 @@ class RealTimeDetector:
                                 friendly_label = "Handbag"
                                 
                             bags.append({
-                                'box': [int(c) for c in xyxy],
+                                'box': [round(c) for c in xyxy],
                                 'conf': conf,
                                 'label': friendly_label
                             })
@@ -273,7 +291,16 @@ class RealTimeDetector:
             # 2. Run Gun Model
             if self.gun_model_loaded and self.gun_model:
                 try:
-                    gun_results = self.gun_model(frame, conf=0.1, verbose=False, device=self.device)[0]
+                    gun_results = self.gun_model(
+                        frame,
+                        conf=0.1,
+                        iou=config.NMS_IOU_THRESHOLD,
+                        imgsz=config.INFERENCE_IMGSZ,
+                        agnostic_nms=config.AGNOSTIC_NMS,
+                        max_det=config.MAX_DETECTIONS,
+                        verbose=False,
+                        device=self.device
+                    )[0]
                     
                     # Raw model logging for pre-filtering diagnostics
                     if show_diagnostics:
@@ -292,10 +319,10 @@ class RealTimeDetector:
                         
                         # Class 0 is "Gun" in our firearm detection model
                         if conf >= conf_g:
-                            cx = int((xyxy[0] + xyxy[2]) / 2)
-                            cy = int((xyxy[1] + xyxy[3]) / 2)
+                            cx = round((xyxy[0] + xyxy[2]) / 2)
+                            cy = round((xyxy[1] + xyxy[3]) / 2)
                             guns.append({
-                                'box': [int(c) for c in xyxy],
+                                'box': [round(c) for c in xyxy],
                                 'conf': conf,
                                 'center': (cx, cy)
                             })
