@@ -366,22 +366,22 @@ class RealTimeDetector:
                 for g in guns:
                     gcx, gcy = g['center']
                     # Draw a line connecting the person and the gun
-                    cv2.line(frame, (pcx, pcy), (gcx, gcy), (0, 0, 255), 4, cv2.LINE_AA)
+                    cv2.line(frame, (pcx, pcy), (gcx, gcy), (0, 0, 255), config.BOX_THICKNESS, cv2.LINE_AA)
                     distance = math.sqrt((pcx - gcx)**2 + (pcy - gcy)**2)
                     mid_x, mid_y = int((pcx + gcx) / 2), int((pcy + gcy) / 2)
                     cv2.putText(frame, f"{int(distance)}px", (mid_x, mid_y - 10), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.85, (0, 0, 255), 2, cv2.LINE_AA)
+                                cv2.FONT_HERSHEY_SIMPLEX, config.FONT_SCALE, (0, 0, 255), config.FONT_THICKNESS, cv2.LINE_AA)
 
         # Helper to draw bounding box and label dynamically
         def draw_labeled_box(img, box, text, box_color, text_color):
             x1, y1, x2, y2 = box
-            # Draw main bounding box (increased thickness to 4)
-            cv2.rectangle(img, (x1, y1), (x2, y2), box_color, 4, cv2.LINE_AA)
+            # Draw main bounding box
+            cv2.rectangle(img, (x1, y1), (x2, y2), box_color, config.BOX_THICKNESS, cv2.LINE_AA)
             
-            # Dynamic size calculation for label (increased scale to 0.85)
+            # Dynamic size calculation for label
             font_face = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 0.85
-            font_thickness = 2
+            font_scale = config.FONT_SCALE
+            font_thickness = config.FONT_THICKNESS
             
             (text_w, text_h), baseline = cv2.getTextSize(text, font_face, font_scale, font_thickness)
             
@@ -420,11 +420,11 @@ class RealTimeDetector:
             draw_labeled_box(frame, (x1, y1, x2, y2), f"GUN {conf:.2f}", (0, 0, 255), (255, 255, 255))
 
         # Helper to draw top banner overlay dynamically centered
-        def draw_banner(img, text, bg_color, fg_color, banner_height=50):
+        def draw_banner(img, text, bg_color, fg_color, banner_height=80):
             cv2.rectangle(img, (0, 0), (w, banner_height), bg_color, -1)
             font_face = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 0.8
-            font_thickness = 2
+            font_scale = config.FONT_SCALE
+            font_thickness = config.FONT_THICKNESS
             (text_w, text_h), _ = cv2.getTextSize(text, font_face, font_scale, font_thickness)
             text_x = max(10, int((w - text_w) / 2))
             text_y = int((banner_height + text_h) / 2)
@@ -435,13 +435,13 @@ class RealTimeDetector:
             # Pulsing Red Banner at top
             pulse = int((time.time() * 5) % 2)
             banner_color = (0, 0, 200) if pulse == 0 else (0, 0, 255)
-            draw_banner(frame, "!!! CRITICAL THREAT: PERSON WITH GUN !!!", banner_color, (255, 255, 255), 50)
-            cv2.rectangle(frame, (0, 0), (w, h), banner_color, 8)
+            draw_banner(frame, "!!! CRITICAL THREAT: PERSON WITH GUN !!!", banner_color, (255, 255, 255), 80)
+            cv2.rectangle(frame, (0, 0), (w, h), banner_color, config.BOX_THICKNESS * 2)
             
         elif high_alert_triggered:
             # Static Orange Banner at top
-            draw_banner(frame, "WARNING: WEAPON DETECTED IN SCENE", (0, 140, 255), (0, 0, 0), 50)
-            cv2.rectangle(frame, (0, 0), (w, h), (0, 140, 255), 8)
+            draw_banner(frame, "WARNING: WEAPON DETECTED IN SCENE", (0, 140, 255), (0, 0, 0), 80)
+            cv2.rectangle(frame, (0, 0), (w, h), (0, 140, 255), config.BOX_THICKNESS * 2)
 
         # 5. Handle Alert Snapshots (Only on inference frames to avoid duplicate copies)
         if run_inference and len(guns) > 0 and len(alerts) > 0:
