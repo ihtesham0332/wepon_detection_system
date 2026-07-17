@@ -5,6 +5,7 @@ import math
 import logging
 import threading
 from datetime import datetime
+import torch
 from ultralytics import YOLO
 import config
 
@@ -18,6 +19,18 @@ class RealTimeDetector:
         self.bag_model = None
         self.gun_model = None
         self.lock = threading.Lock()
+        
+        # Check GPU availability
+        try:
+            if torch.cuda.is_available():
+                self.device = "cuda"
+                logger.info("GPU (CUDA) is available. Running models on GPU.")
+            else:
+                self.device = "cpu"
+                logger.info("GPU is not available. Running models on CPU.")
+        except Exception as e:
+            self.device = "cpu"
+            logger.warning(f"Error checking GPU availability: {e}. Defaulting to CPU.")
         
         # UI Thresholds (can be adjusted dynamically)
         self.conf_person = config.DEFAULT_CONF_PERSON
@@ -53,9 +66,9 @@ class RealTimeDetector:
             try:
                 logger.info(f"Attempting to load COCO model: {model_name}...")
                 # Ultralytics auto-downloads standard models if they don't exist locally
-                self.coco_model = YOLO(model_name)
+                self.coco_model = YOLO(model_name).to(self.device)
                 self.coco_model_name_loaded = model_name
-                logger.info(f"Successfully loaded COCO model: {model_name}")
+                logger.info(f"Successfully loaded COCO model: {model_name} on {self.device}")
                 return
             except Exception as e:
                 logger.warning(f"Could not load {model_name}: {e}. Trying next fallback...")
@@ -69,9 +82,9 @@ class RealTimeDetector:
         if os.path.exists(config.GUN_MODEL_PATH):
             try:
                 logger.info(f"Loading local weapon detection model from {config.GUN_MODEL_PATH}...")
-                self.gun_model = YOLO(config.GUN_MODEL_PATH)
+                self.gun_model = YOLO(config.GUN_MODEL_PATH).to(self.device)
                 self.gun_model_loaded = True
-                logger.info("Successfully loaded local gun detection model.")
+                logger.info(f"Successfully loaded local gun detection model on {self.device}.")
                 return
             except Exception as e:
                 logger.error(f"Error loading local gun model: {e}. Re-downloading...")
@@ -88,9 +101,9 @@ class RealTimeDetector:
                 cache_dir=os.path.join(config.MODEL_DIR, "cache")
             )
             shutil.copy(downloaded_path, config.GUN_MODEL_PATH)
-            self.gun_model = YOLO(config.GUN_MODEL_PATH)
+            self.gun_model = YOLO(config.GUN_MODEL_PATH).to(self.device)
             self.gun_model_loaded = True
-            logger.info("Successfully downloaded and loaded gun model via Hugging Face.")
+            logger.info(f"Successfully downloaded and loaded gun model via Hugging Face on {self.device}.")
             return
         except Exception as e:
             logger.warning(f"Hugging Face Hub download failed: {e}. Trying direct URL download...")
@@ -102,9 +115,9 @@ class RealTimeDetector:
             logger.info(f"Downloading from direct URL: {url}...")
             urllib.request.urlretrieve(url, config.GUN_MODEL_PATH)
             
-            self.gun_model = YOLO(config.GUN_MODEL_PATH)
+            self.gun_model = YOLO(config.GUN_MODEL_PATH).to(self.device)
             self.gun_model_loaded = True
-            logger.info("Successfully downloaded and loaded gun model via direct URL.")
+            logger.info(f"Successfully downloaded and loaded gun model via direct URL on {self.device}.")
             return
         except Exception as e:
             logger.error(f"Direct download failed: {e}. Weapon detection will be offline.")
@@ -116,9 +129,9 @@ class RealTimeDetector:
         if os.path.exists(config.BAG_MODEL_PATH):
             try:
                 logger.info(f"Loading custom bag detection model from {config.BAG_MODEL_PATH}...")
-                self.bag_model = YOLO(config.BAG_MODEL_PATH)
+                self.bag_model = YOLO(config.BAG_MODEL_PATH).to(self.device)
                 self.bag_model_loaded = True
-                logger.info(f"Successfully loaded custom bag detection model. Classes: {self.bag_model.names}")
+                logger.info(f"Successfully loaded custom bag detection model on {self.device}. Classes: {self.bag_model.names}")
             except Exception as e:
                 logger.error(f"Error loading custom bag model: {e}")
                 self.bag_model_loaded = False
@@ -177,7 +190,7 @@ class RealTimeDetector:
             # 1. Run COCO YOLO Model (Person detection & fallback Bags)
             if self.coco_model:
                 try:
-                    coco_results = self.coco_model(frame, conf=0.1, verbose=False)[0]
+                    coco_results = self.coco_model(frame, conf=0.1, verbose=False, device=self.device)[0]
                     
                     # Raw model logging for pre-filtering diagnostics
                     if show_diagnostics:
@@ -219,7 +232,7 @@ class RealTimeDetector:
             # 1b. Run Custom Bag YOLO Model (if loaded)
             if self.bag_model_loaded and self.bag_model:
                 try:
-                    bag_results = self.bag_model(frame, conf=0.1, verbose=False)[0]
+                    bag_results = self.bag_model(frame, conf=0.1, verbose=False, device=self.device)[0]
                     
                     # Raw model logging for pre-filtering diagnostics
                     if show_diagnostics:
@@ -260,7 +273,7 @@ class RealTimeDetector:
             # 2. Run Gun Model
             if self.gun_model_loaded and self.gun_model:
                 try:
-                    gun_results = self.gun_model(frame, conf=0.1, verbose=False)[0]
+                    gun_results = self.gun_model(frame, conf=0.1, verbose=False, device=self.device)[0]
                     
                     # Raw model logging for pre-filtering diagnostics
                     if show_diagnostics:
